@@ -1,0 +1,202 @@
+
+import React from 'react';
+import MainLayout from '@/components/layout/MainLayout';
+import { useLeadContext } from '@/context/LeadContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  BarChart, 
+  Bar, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer 
+} from 'recharts';
+import { formatCurrency } from '@/lib/formatters';
+import { PIPELINE_STAGES } from '@/types/lead';
+
+const COLORS = ['#9b87f5', '#0EA5E9', '#F97316', '#10B981', '#EF4444'];
+
+const Reports = () => {
+  const { leads } = useLeadContext();
+
+  // Pipeline by stage data
+  const stageData = PIPELINE_STAGES.map(stage => {
+    const stageLeads = leads.filter(lead => lead.stage === stage.id);
+    return {
+      name: stage.name,
+      value: stageLeads.reduce((sum, lead) => sum + lead.estimatedValue, 0),
+      count: stageLeads.length,
+      color: stage.color,
+    };
+  });
+
+  // Source distribution data
+  const sourceData = Array.from(
+    leads.reduce((acc, lead) => {
+      const source = lead.source;
+      if (!acc.has(source)) {
+        acc.set(source, { name: source, count: 0, value: 0 });
+      }
+      
+      const current = acc.get(source)!;
+      current.count += 1;
+      current.value += lead.estimatedValue;
+      
+      return acc;
+    }, new Map())
+  ).map(([_, data]) => data);
+
+  // Priority distribution
+  const priorityData = Array.from(
+    leads.reduce((acc, lead) => {
+      const priority = lead.priority;
+      if (!acc.has(priority)) {
+        acc.set(priority, { name: priority, count: 0, value: 0 });
+      }
+      
+      const current = acc.get(priority)!;
+      current.count += 1;
+      current.value += lead.estimatedValue;
+      
+      return acc;
+    }, new Map())
+  ).map(([_, data]) => data);
+
+  return (
+    <MainLayout title="Reports">
+      <h2 className="text-2xl font-bold mb-6">Pipeline Analytics</h2>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Pipeline Value by Stage</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={stageData}
+                  margin={{ top: 10, right: 30, left: 20, bottom: 40 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fill: '#888' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => formatCurrency(value)} 
+                    tick={{ fill: '#888' }}
+                  />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(value as number)}
+                  />
+                  <Bar dataKey="value" name="Value">
+                    {stageData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Lead Count by Source</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={sourceData}
+                    dataKey="count"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {sourceData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [value, 'Leads']} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Value by Priority</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={priorityData}
+                  layout="vertical"
+                  margin={{ top: 20, right: 30, left: 60, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                  <XAxis type="number" tickFormatter={(value) => formatCurrency(value)} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: '#888' }} />
+                  <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                  <Bar dataKey="value" name="Value" fill="#9b87f5" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Lead Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stageData}
+                    dataKey="count"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {stageData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [value, 'Leads']} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </MainLayout>
+  );
+};
+
+export default Reports;
