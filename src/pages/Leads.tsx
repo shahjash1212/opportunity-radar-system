@@ -14,7 +14,7 @@ import { LeadsListView } from '@/components/leads/LeadsListView';
 import { toast } from '@/components/ui/sonner';
 
 const Leads = () => {
-  const { leads, loading, moveLead } = useLeadContext();
+  const { leads, loading, moveLead, users } = useLeadContext();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'board'>('board');
@@ -115,7 +115,11 @@ const Leads = () => {
           </TabsList>
 
           <TabsContent value="all" className="mt-6">
-            <LeadsListView leads={leads} onViewLead={handleViewLead} />
+            <LeadsListView 
+              leads={leads} 
+              onViewLead={handleViewLead}
+              users={users} 
+            />
           </TabsContent>
 
           {PIPELINE_STAGES.map((stage) => (
@@ -124,6 +128,7 @@ const Leads = () => {
                 leads={leads}
                 onViewLead={handleViewLead}
                 filteredStage={stage.id}
+                users={users}
               />
             </TabsContent>
           ))}

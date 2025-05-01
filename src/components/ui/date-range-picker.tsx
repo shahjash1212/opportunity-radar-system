@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
-  value?: DateRange;
+interface DateRangePickerProps {
+  value?: DateRange | undefined;
   onChange?: (date: DateRange | undefined) => void;
+  className?: string;
 }
 
 export function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {

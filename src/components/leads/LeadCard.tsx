@@ -135,41 +135,47 @@ export function LeadCard({ lead, onView }: LeadCardProps) {
           </div>
         </div>
         
-        <div className="flex justify-between items-center mt-4">
-          <div className="flex flex-col gap-1">
-            <BadgeLabel 
-              text={stageConfig.name} 
-              color={stageConfig.color}
-            />
-
-            {lead.stage === 'lost' && lead.lostReason && lostReasonItem && (
-              <span className="text-xs text-muted-foreground">
-                Reason: {lostReasonItem.label}
-              </span>
-            )}
-
-            {lead.stage === 'proposal' && lead.proposalStatus && proposalStatusItem && (
-              <span className="text-xs text-muted-foreground">
-                Status: {proposalStatusItem.label}
-              </span>
+        <div className="flex flex-col mt-4 gap-2">
+          <div className="flex justify-between items-center">
+            <div>
+              <BadgeLabel 
+                text={stageConfig.name} 
+                color={stageConfig.color}
+              />
+            </div>
+            
+            {lead.owner ? (
+              <div className="flex items-center">
+                <Avatar className="w-6 h-6 mr-2">
+                  {lead.owner.avatar ? (
+                    <AvatarImage src={lead.owner.avatar} />
+                  ) : (
+                    <AvatarFallback>
+                      {lead.owner.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <p className="text-xs">{lead.owner.name}</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Unassigned</p>
             )}
           </div>
           
-          {lead.owner ? (
-            <div className="flex items-center">
-              <Avatar className="w-6 h-6 mr-2">
-                {lead.owner.avatar ? (
-                  <AvatarImage src={lead.owner.avatar} />
-                ) : (
-                  <AvatarFallback>
-                    {lead.owner.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <p className="text-xs">{lead.owner.name}</p>
+          {/* Display lost reason prominently if in lost stage */}
+          {lead.stage === 'lost' && lead.lostReason && lostReasonItem && (
+            <div className="mt-2 p-2 bg-red-50 rounded-md border border-red-100">
+              <p className="text-xs font-medium text-red-800">Lost Reason:</p>
+              <p className="text-sm text-red-700">{lostReasonItem.label}</p>
             </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">Unassigned</p>
+          )}
+          
+          {/* Display proposal status prominently if in proposal stage */}
+          {lead.stage === 'proposal' && lead.proposalStatus && proposalStatusItem && (
+            <div className="mt-2 p-2 bg-orange-50 rounded-md border border-orange-100">
+              <p className="text-xs font-medium text-orange-800">Proposal Status:</p>
+              <p className="text-sm text-orange-700">{proposalStatusItem.label}</p>
+            </div>
           )}
         </div>
       </CardContent>
