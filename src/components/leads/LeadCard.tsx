@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lead, PIPELINE_STAGES } from '@/types/lead';
+import { Lead, PIPELINE_STAGES, LOST_REASONS, PROPOSAL_STATUSES } from '@/types/lead';
 import { BadgeLabel } from '@/components/ui/badge-label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatCurrency } from '@/lib/formatters';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu';
 import { useLeadContext } from '@/context/LeadContext';
 
 interface LeadCardProps {
@@ -16,7 +16,7 @@ interface LeadCardProps {
 }
 
 export function LeadCard({ lead, onView }: LeadCardProps) {
-  const { moveLead, removeLead } = useLeadContext();
+  const { moveLead, removeLead, updateLeadData } = useLeadContext();
   const stageConfig = PIPELINE_STAGES.find((s) => s.id === lead.stage) || PIPELINE_STAGES[0];
   
   const priorityColors = {
@@ -32,6 +32,28 @@ export function LeadCard({ lead, onView }: LeadCardProps) {
   const handleDelete = async () => {
     await removeLead(lead.id);
   };
+
+  const handleSetLostReason = async (reason: string) => {
+    await updateLeadData(lead.id, {
+      lostReason: reason as any
+    });
+  };
+
+  const handleSetProposalStatus = async (status: string) => {
+    await updateLeadData(lead.id, {
+      proposalStatus: status as any
+    });
+  };
+
+  // Get the lost reason label if available
+  const lostReasonItem = lead.lostReason ? 
+    LOST_REASONS.find(item => item.id === lead.lostReason) : 
+    undefined;
+
+  // Get the proposal status label if available
+  const proposalStatusItem = lead.proposalStatus ? 
+    PROPOSAL_STATUSES.find(item => item.id === lead.proposalStatus) : 
+    undefined;
 
   return (
     <Card className="mb-3">
@@ -67,6 +89,36 @@ export function LeadCard({ lead, onView }: LeadCardProps) {
                   </DropdownMenuItem>
                 )
               ))}
+
+              {lead.stage === 'lost' && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Set Lost Reason</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={lead.lostReason} onValueChange={handleSetLostReason}>
+                      {LOST_REASONS.map((reason) => (
+                        <DropdownMenuRadioItem key={reason.id} value={reason.id}>
+                          {reason.label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
+
+              {lead.stage === 'proposal' && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Set Proposal Status</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={lead.proposalStatus} onValueChange={handleSetProposalStatus}>
+                      {PROPOSAL_STATUSES.map((status) => (
+                        <DropdownMenuRadioItem key={status.id} value={status.id}>
+                          {status.label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -84,11 +136,23 @@ export function LeadCard({ lead, onView }: LeadCardProps) {
         </div>
         
         <div className="flex justify-between items-center mt-4">
-          <div>
+          <div className="flex flex-col gap-1">
             <BadgeLabel 
               text={stageConfig.name} 
               color={stageConfig.color}
             />
+
+            {lead.stage === 'lost' && lead.lostReason && lostReasonItem && (
+              <span className="text-xs text-muted-foreground">
+                Reason: {lostReasonItem.label}
+              </span>
+            )}
+
+            {lead.stage === 'proposal' && lead.proposalStatus && proposalStatusItem && (
+              <span className="text-xs text-muted-foreground">
+                Status: {proposalStatusItem.label}
+              </span>
+            )}
           </div>
           
           {lead.owner ? (

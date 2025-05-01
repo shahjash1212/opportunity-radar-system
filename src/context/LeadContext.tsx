@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Lead, PipelineStage, User } from '../types/lead';
+import { Lead, PipelineStage, User, LostReason, ProposalStatus } from '../types/lead';
 import { getLeads, addLead, updateLead, deleteLead, addComment, USERS } from '../data/mockData';
 import { toast } from '../components/ui/sonner';
 
@@ -15,6 +15,8 @@ interface LeadContextType {
   moveLead: (leadId: string, newStage: PipelineStage) => Promise<Lead | undefined>;
   addLeadComment: (leadId: string, text: string, userId: string) => Promise<boolean>;
   assignLead: (leadId: string, userId: string | undefined) => Promise<Lead | undefined>;
+  setLostReason: (leadId: string, reason: LostReason) => Promise<Lead | undefined>;
+  setProposalStatus: (leadId: string, status: ProposalStatus) => Promise<Lead | undefined>;
   users: User[];
   currentUser: User;
 }
@@ -88,7 +90,26 @@ export const LeadProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const moveLead = async (leadId: string, newStage: PipelineStage) => {
-    return updateLeadData(leadId, { stage: newStage });
+    const updates: Partial<Lead> = { stage: newStage };
+    
+    // Clear stage-specific fields when moving to a different stage
+    if (newStage !== 'lost') {
+      updates.lostReason = undefined;
+    }
+    
+    if (newStage !== 'proposal') {
+      updates.proposalStatus = undefined;
+    }
+    
+    return updateLeadData(leadId, updates);
+  };
+
+  const setLostReason = async (leadId: string, reason: LostReason) => {
+    return updateLeadData(leadId, { lostReason: reason });
+  };
+
+  const setProposalStatus = async (leadId: string, status: ProposalStatus) => {
+    return updateLeadData(leadId, { proposalStatus: status });
   };
 
   const addLeadComment = async (leadId: string, text: string, userId: string) => {
@@ -144,6 +165,8 @@ export const LeadProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     moveLead,
     addLeadComment,
     assignLead,
+    setLostReason,
+    setProposalStatus,
     users,
     currentUser,
   };

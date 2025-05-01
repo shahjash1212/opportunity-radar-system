@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { Lead, PIPELINE_STAGES, StageConfig } from '@/types/lead';
+import { Lead, PIPELINE_STAGES, StageConfig, LOST_REASONS, PROPOSAL_STATUSES } from '@/types/lead';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface LeadsKanbanBoardProps {
   leads: Lead[];
@@ -18,6 +19,26 @@ export const LeadsKanbanBoard = ({ leads, onViewLead, onDragEnd }: LeadsKanbanBo
         {PIPELINE_STAGES.map((stage) => {
           const stageLeads = leads.filter((lead) => lead.stage === stage.id);
           
+          // Group lost leads by reason if in the lost stage
+          const groupedLeads = stage.id === 'lost' 
+            ? stageLeads.reduce((acc, lead) => {
+                const reason = lead.lostReason || 'other';
+                if (!acc[reason]) acc[reason] = [];
+                acc[reason].push(lead);
+                return acc;
+              }, {} as Record<string, Lead[]>)
+            : {};
+          
+          // Group proposal leads by status if in the proposal stage
+          const proposalGroupedLeads = stage.id === 'proposal'
+            ? stageLeads.reduce((acc, lead) => {
+                const status = lead.proposalStatus || 'other';
+                if (!acc[status]) acc[status] = [];
+                acc[status].push(lead);
+                return acc;
+              }, {} as Record<string, Lead[]>)
+            : {};
+            
           return (
             <div 
               key={stage.id} 
@@ -44,20 +65,85 @@ export const LeadsKanbanBoard = ({ leads, onViewLead, onDragEnd }: LeadsKanbanBo
                         snapshot.isDraggingOver ? "bg-slate-100" : ""
                       )}
                     >
-                      {stageLeads.map((lead, index) => (
-                        <Draggable key={lead.id} draggableId={lead.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={cn("mb-3", snapshot.isDragging ? "opacity-70" : "")}
-                            >
-                              <LeadCard lead={lead} onView={onViewLead} />
+                      {stage.id === 'lost' ? (
+                        // Render lost leads grouped by reason
+                        Object.entries(groupedLeads).map(([reason, reasonLeads]) => {
+                          const reasonObj = LOST_REASONS.find(r => r.id === reason);
+                          return (
+                            <div key={reason} className="mb-4">
+                              <div className="flex items-center mb-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {reasonObj?.label || reason}
+                                </Badge>
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                  {reasonLeads.length} leads
+                                </span>
+                              </div>
+                              {reasonLeads.map((lead, index) => (
+                                <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={cn("mb-3", snapshot.isDragging ? "opacity-70" : "")}
+                                    >
+                                      <LeadCard lead={lead} onView={onViewLead} />
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
                             </div>
-                          )}
-                        </Draggable>
-                      ))}
+                          );
+                        })
+                      ) : stage.id === 'proposal' ? (
+                        // Render proposal leads grouped by status
+                        Object.entries(proposalGroupedLeads).map(([status, statusLeads]) => {
+                          const statusObj = PROPOSAL_STATUSES.find(s => s.id === status);
+                          return (
+                            <div key={status} className="mb-4">
+                              <div className="flex items-center mb-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {statusObj?.label || status}
+                                </Badge>
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                  {statusLeads.length} leads
+                                </span>
+                              </div>
+                              {statusLeads.map((lead, index) => (
+                                <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={cn("mb-3", snapshot.isDragging ? "opacity-70" : "")}
+                                    >
+                                      <LeadCard lead={lead} onView={onViewLead} />
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        // Render regular leads without grouping
+                        stageLeads.map((lead, index) => (
+                          <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={cn("mb-3", snapshot.isDragging ? "opacity-70" : "")}
+                              >
+                                <LeadCard lead={lead} onView={onViewLead} />
+                              </div>
+                            )}
+                          </Draggable>
+                        ))
+                      )}
                       {provided.placeholder}
                     </div>
                   )}
