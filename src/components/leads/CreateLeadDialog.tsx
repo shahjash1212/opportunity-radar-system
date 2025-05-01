@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -59,7 +58,10 @@ export function CreateLeadDialog() {
     const owner = ownerId ? users.find(u => u.id === ownerId) : undefined;
     
     await createLead({
-      ...leadData,
+      name: data.name,
+      company: data.company,
+      estimatedValue: data.estimatedValue,
+      notes: data.notes,
       source: data.source as LeadSource,
       priority: data.priority as PriorityLevel,
       stage: data.stage as PipelineStage,
