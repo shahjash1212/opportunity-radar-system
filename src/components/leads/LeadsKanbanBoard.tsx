@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { Lead, PIPELINE_STAGES, StageConfig, LOST_REASONS, PROPOSAL_STATUSES } from '@/types/lead';
+import { Lead, LOST_REASONS, PROPOSAL_STATUSES } from '@/types/lead';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useLeadContext } from '@/context/LeadContext';
 
 interface LeadsKanbanBoardProps {
   leads: Lead[];
@@ -13,10 +14,12 @@ interface LeadsKanbanBoardProps {
 }
 
 export const LeadsKanbanBoard = ({ leads, onViewLead, onDragEnd }: LeadsKanbanBoardProps) => {
+  const { pipelineStages } = useLeadContext();
+  
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex gap-4 overflow-x-auto pb-4 max-w-full">
-        {PIPELINE_STAGES.map((stage) => {
+        {pipelineStages.map((stage) => {
           const stageLeads = leads.filter((lead) => lead.stage === stage.id);
           
           // Group lost leads by reason if in the lost stage

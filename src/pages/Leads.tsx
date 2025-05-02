@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { useLeadContext } from '@/context/LeadContext';
-import { Lead, PIPELINE_STAGES, PipelineStage } from '@/types/lead';
+import { Lead, PipelineStage } from '@/types/lead';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreateLeadDialog } from '@/components/leads/CreateLeadDialog';
-import { LeadCard } from '@/components/leads/LeadCard';
 import { ViewLeadDialog } from '@/components/leads/ViewLeadDialog';
 import { Button } from '@/components/ui/button';
 import { Kanban, List } from 'lucide-react';
@@ -14,7 +13,7 @@ import { LeadsListView } from '@/components/leads/LeadsListView';
 import { toast } from '@/components/ui/sonner';
 
 const Leads = () => {
-  const { leads, loading, moveLead, users } = useLeadContext();
+  const { leads, loading, moveLead, users, pipelineStages } = useLeadContext();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'board'>('board');
@@ -47,7 +46,8 @@ const Leads = () => {
       
       moveLead(leadId, newStage)
         .then(() => {
-          toast.success(`Lead moved to ${PIPELINE_STAGES.find(stage => stage.id === newStage)?.name}`);
+          const stageName = pipelineStages.find(stage => stage.id === newStage)?.name;
+          toast.success(`Lead moved to ${stageName || newStage}`);
         })
         .catch((error) => {
           console.error('Error moving lead:', error);
@@ -107,7 +107,7 @@ const Leads = () => {
         <Tabs defaultValue="all">
           <TabsList>
             <TabsTrigger value="all">All Leads</TabsTrigger>
-            {PIPELINE_STAGES.map((stage) => (
+            {pipelineStages.map((stage) => (
               <TabsTrigger key={stage.id} value={stage.id}>
                 {stage.name}
               </TabsTrigger>
@@ -122,7 +122,7 @@ const Leads = () => {
             />
           </TabsContent>
 
-          {PIPELINE_STAGES.map((stage) => (
+          {pipelineStages.map((stage) => (
             <TabsContent key={stage.id} value={stage.id} className="mt-6">
               <LeadsListView 
                 leads={leads}

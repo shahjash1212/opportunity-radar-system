@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Lead, PipelineStage, User, LostReason, ProposalStatus } from '../types/lead';
+import { Lead, PipelineStage, User, LostReason, ProposalStatus, StageConfig, PIPELINE_STAGES } from '../types/lead';
 import { getLeads, addLead, updateLead, deleteLead, addComment, USERS } from '../data/mockData';
 import { toast } from '../components/ui/sonner';
 
@@ -17,6 +17,8 @@ interface LeadContextType {
   assignLead: (leadId: string, userId: string | undefined) => Promise<Lead | undefined>;
   setLostReason: (leadId: string, reason: LostReason) => Promise<Lead | undefined>;
   setProposalStatus: (leadId: string, status: ProposalStatus) => Promise<Lead | undefined>;
+  updatePipelineStages: (stages: StageConfig[]) => void;
+  pipelineStages: StageConfig[];
   users: User[];
   currentUser: User;
 }
@@ -27,6 +29,7 @@ export const LeadProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [pipelineStages, setPipelineStages] = useState<StageConfig[]>(PIPELINE_STAGES);
   const users = USERS;
   const currentUser = users[0]; // Default to first user
 
@@ -150,6 +153,33 @@ export const LeadProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Add function to update pipeline stages
+  const updatePipelineStages = (stages: StageConfig[]) => {
+    try {
+      setPipelineStages(stages);
+      
+      // If we were in a real app, we'd persist this to the database here
+      // For now, we'll just update the local state
+      
+      // Handle leads with stages that no longer exist
+      const stageIds = stages.map(s => s.id);
+      
+      // For any lead with a stage that no longer exists, move it to the first stage
+      setLeads(prevLeads => 
+        prevLeads.map(lead => {
+          if (!stageIds.includes(lead.stage as string)) {
+            return { ...lead, stage: stages[0].id as PipelineStage };
+          }
+          return lead;
+        })
+      );
+      
+    } catch (err) {
+      toast.error("Failed to update pipeline stages");
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
   }, []);
@@ -167,6 +197,8 @@ export const LeadProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     assignLead,
     setLostReason,
     setProposalStatus,
+    updatePipelineStages,
+    pipelineStages,
     users,
     currentUser,
   };

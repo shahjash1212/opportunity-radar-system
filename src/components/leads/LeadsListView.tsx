@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Lead, PIPELINE_STAGES } from '@/types/lead';
+import { Lead } from '@/types/lead';
 import { LeadCard } from './LeadCard';
-import { BadgeLabel } from '../ui/badge-label';
 import { FilterState, LeadFilters } from '../filters/LeadFilters';
 import { isWithinInterval } from 'date-fns';
+import { useLeadContext } from '@/context/LeadContext';
 
 interface LeadsListViewProps {
   leads: Lead[];
@@ -14,6 +14,7 @@ interface LeadsListViewProps {
 }
 
 export const LeadsListView = ({ leads, onViewLead, filteredStage, users }: LeadsListViewProps) => {
+  const { pipelineStages } = useLeadContext();
   const [filters, setFilters] = React.useState<FilterState>({});
   
   // First filter by stage if specified

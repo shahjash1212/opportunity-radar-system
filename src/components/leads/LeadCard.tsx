@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lead, PIPELINE_STAGES, LOST_REASONS, PROPOSAL_STATUSES } from '@/types/lead';
+import { Lead, LOST_REASONS, PROPOSAL_STATUSES } from '@/types/lead';
 import { BadgeLabel } from '@/components/ui/badge-label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatCurrency } from '@/lib/formatters';
@@ -16,8 +16,8 @@ interface LeadCardProps {
 }
 
 export function LeadCard({ lead, onView }: LeadCardProps) {
-  const { moveLead, removeLead, updateLeadData } = useLeadContext();
-  const stageConfig = PIPELINE_STAGES.find((s) => s.id === lead.stage) || PIPELINE_STAGES[0];
+  const { moveLead, removeLead, updateLeadData, pipelineStages } = useLeadContext();
+  const stageConfig = pipelineStages.find((s) => s.id === lead.stage) || pipelineStages[0];
   
   const priorityColors = {
     low: '#10B981',
@@ -79,7 +79,7 @@ export function LeadCard({ lead, onView }: LeadCardProps) {
               <DropdownMenuItem onClick={() => onView(lead)}>View Details</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleDelete()}>Delete</DropdownMenuItem>
               
-              {PIPELINE_STAGES.map((stage) => (
+              {pipelineStages.map((stage) => (
                 lead.stage !== stage.id && (
                   <DropdownMenuItem 
                     key={stage.id} 
